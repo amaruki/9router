@@ -35,11 +35,11 @@ export async function getGlmUsage(apiKey, provider, proxyOptions = null) {
 
     for (const limit of limits) {
       if (!limit || limit.type !== "TOKENS_LIMIT") continue;
+
       const usedPercent = Number(limit.percentage) || 0;
       const resetMs = Number(limit.nextResetTime) || 0;
       const remaining = Math.max(0, 100 - usedPercent);
-
-      quotas.session = {
+      const quota = {
         used: usedPercent,
         total: 100,
         remaining,
@@ -47,6 +47,12 @@ export async function getGlmUsage(apiKey, provider, proxyOptions = null) {
         resetAt: resetMs > 0 ? new Date(resetMs).toISOString() : null,
         unlimited: false,
       };
+
+      if (limit.unit === 3) {
+        quotas["session (5h)"] = quota;
+      } else if (limit.unit === 6) {
+        quotas["weekly (7d)"] = quota;
+      }
     }
 
     const levelRaw = typeof data.level === "string" ? data.level : "";
